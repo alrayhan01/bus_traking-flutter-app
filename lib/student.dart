@@ -4,6 +4,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'login_screen.dart';
+import 'profile.dart';
 
 class StudentScreen extends StatefulWidget {
   const StudentScreen({super.key});
@@ -91,15 +92,15 @@ class _StudentScreenState extends State<StudentScreen> {
         title: const Text('স্টুডেন্ট ড্যাশবোর্ড', style: TextStyle(color: Colors.white)),
         backgroundColor: Colors.blueAccent,
         actions: [
+          // প্রোফাইলে যাওয়ার বাটন
           IconButton(
-            icon: const Icon(Icons.logout, color: Colors.white),
-            onPressed: () async {
-              await FirebaseAuth.instance.signOut();
-              if (mounted) {
-                Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const LoginScreen()));
-              }
+            icon: const Icon(Icons.person, color: Colors.white),
+            onPressed: () {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const ProfileScreen()));
             },
-          )
+          ),
+          // লগআউট বাটন
+
         ],
       ),
       body: Column(

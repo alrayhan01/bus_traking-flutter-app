@@ -4,7 +4,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'login_screen.dart';
+import 'profile.dart'; // প্রোফাইল পেজ ইমপোর্ট করা হলো
 
 class DriverScreen extends StatefulWidget {
   const DriverScreen({super.key});
@@ -20,23 +20,22 @@ class _DriverScreenState extends State<DriverScreen> {
   bool _isTripStarted = false;
   StreamSubscription<Position>? _positionStream;
 
-  String? _busId; // ড্রাইভারের নিজস্ব বাস আইডি সেভ রাখার ভেরিয়েবল
+  String? _busId;
 
   @override
   void initState() {
     super.initState();
-    _loadDriverData(); // শুরুতে ড্রাইভারের আইডি টেনে আনবে
+    _loadDriverData();
     _getInitialLocation();
   }
 
-  // ফায়ারবেস থেকে লগইন করা ড্রাইভারের আইডি (যেমন: Torongo_01) বের করার ফাংশন
   Future<void> _loadDriverData() async {
     User? currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser != null) {
       DocumentSnapshot userDoc = await FirebaseFirestore.instance.collection('users').doc(currentUser.uid).get();
       if (userDoc.exists && mounted) {
         setState(() {
-          _busId = userDoc['id']; // সাইন-আপের সময় দেওয়া আইডিটা এখানে সেট হয়ে যাবে
+          _busId = userDoc['id'];
         });
       }
     }
@@ -88,7 +87,7 @@ class _DriverScreenState extends State<DriverScreen> {
     setState(() { _isTripStarted = false; });
     _positionStream?.cancel();
 
-    FirebaseFirestore.instance.collection('buses').doc(_busId).set({ // ডাইনামিক আইডি ব্যবহার হচ্ছে
+    FirebaseFirestore.instance.collection('buses').doc(_busId).set({
       'is_active': false,
     }, SetOptions(merge: true));
 
@@ -101,7 +100,7 @@ class _DriverScreenState extends State<DriverScreen> {
     if (_busId == null) return;
 
     try {
-      await FirebaseFirestore.instance.collection('buses').doc(_busId).set({ // ডাইনামিক আইডি ব্যবহার হচ্ছে
+      await FirebaseFirestore.instance.collection('buses').doc(_busId).set({
         'latitude': position.latitude,
         'longitude': position.longitude,
         'is_active': isActive,
@@ -125,15 +124,13 @@ class _DriverScreenState extends State<DriverScreen> {
         title: Text(_busId == null ? 'ড্রাইভার ড্যাশবোর্ড' : 'বাস: $_busId', style: const TextStyle(color: Colors.white)),
         backgroundColor: Colors.redAccent,
         actions: [
+          // প্রোফাইল পেজে যাওয়ার বাটন
           IconButton(
-            icon: const Icon(Icons.logout, color: Colors.white),
-            onPressed: () async {
-              await FirebaseAuth.instance.signOut();
-              if (mounted) {
-                Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const LoginScreen()));
-              }
+            icon: const Icon(Icons.person, color: Colors.white),
+            onPressed: () {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const ProfileScreen()));
             },
-          )
+          ),
         ],
       ),
       body: Column(
@@ -167,10 +164,12 @@ class _DriverScreenState extends State<DriverScreen> {
                 // টিচারদের মেসেজ দেখার অপশন
                 if (_busId != null)
                   StreamBuilder<DocumentSnapshot>(
-                    stream: FirebaseFirestore.instance.collection('buses').doc(_busId).snapshots(), // ডাইনামিক আইডি
+                    stream: FirebaseFirestore.instance.collection('buses').doc(_busId).snapshots(),
                     builder: (context, snapshot) {
                       if (snapshot.hasData && snapshot.data!.exists) {
                         var data = snapshot.data!.data() as Map<String, dynamic>;
+
+                        // মেসেজ থাকলে এবং ফাঁকা না হলে দেখাবে
                         if (data.containsKey('teacher_message') && data['teacher_message'] != '') {
                           return Container(
                             padding: const EdgeInsets.all(12),
@@ -190,6 +189,16 @@ class _DriverScreenState extends State<DriverScreen> {
                                         style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.redAccent, fontSize: 16)
                                     )
                                 ),
+                                // ❌ নতুন ক্রস বাটন
+                                IconButton(
+                                  icon: const Icon(Icons.close, color: Colors.red, size: 25),
+                                  onPressed: () {
+                                    // বাটনে চাপ দিলে ফায়ারবেস থেকে মেসেজটা মুছে যাবে (ফাঁকা হয়ে যাবে)
+                                    FirebaseFirestore.instance.collection('buses').doc(_busId).update({
+                                      'teacher_message': ''
+                                    });
+                                  },
+                                )
                               ],
                             ),
                           );

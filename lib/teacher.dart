@@ -4,6 +4,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'login_screen.dart';
+import 'profile.dart';
 
 class TeacherScreen extends StatefulWidget {
   const TeacherScreen({super.key});
@@ -127,15 +128,14 @@ class _TeacherScreenState extends State<TeacherScreen> {
         title: const Text('টিচার ড্যাশবোর্ড', style: TextStyle(color: Colors.white)),
         backgroundColor: Colors.purple, // টিচারদের জন্য পার্পল রং
         actions: [
+          // প্রোফাইলে যাওয়ার বাটন
           IconButton(
-            icon: const Icon(Icons.logout, color: Colors.white),
-            onPressed: () async {
-              await FirebaseAuth.instance.signOut();
-              if (mounted) {
-                Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const LoginScreen()));
-              }
+            icon: const Icon(Icons.person, color: Colors.white),
+            onPressed: () {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const ProfileScreen()));
             },
-          )
+          ),
+
         ],
       ),
       body: Column(
